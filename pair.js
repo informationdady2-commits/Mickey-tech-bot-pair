@@ -54,6 +54,11 @@ router.get('/', async (req, res) => {
     // Remove existing session if present
     await removeFile(dirs);
 
+    // Ensure the session directory exists before proceeding
+    if (!fs.existsSync(dirs)) {
+        fs.mkdirSync(dirs, { recursive: true });
+    }
+
     // Clean the phone number - remove any non-digit characters
     num = num.replace(/[^0-9]/g, '');
 
