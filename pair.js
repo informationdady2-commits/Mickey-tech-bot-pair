@@ -16,6 +16,37 @@ function removeFile(FilePath) {
     }
 }
 
+// Function to wait for session to be fully established
+async function waitForSessionEstablished(KnightBot, timeout = 30000) {
+    return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+            reject(new Error('Session establishment timeout'));
+        }, timeout);
+
+        const checkInterval = setInterval(() => {
+            try {
+                if (KnightBot.authState.creds.registered && 
+                    Object.keys(KnightBot.authState.creds).length > 5) { // Ensure creds has substantial data
+                    clearInterval(checkInterval);
+                    clearTimeout(timeoutId);
+                    resolve(true);
+                }
+            } catch (error) {
+                // Continue checking
+            }
+        }, 1000);
+
+        // Also listen for connection update
+        KnightBot.ev.once('connection.update', (update) => {
+            if (update.connection === 'open') {
+                clearInterval(checkInterval);
+                clearTimeout(timeoutId);
+                resolve(true);
+            }
+        });
+    });
+}
+
 router.get('/', async (req, res) => {
     let num = req.query.number;
     let dirs = './' + (num || `session`);
@@ -65,49 +96,91 @@ router.get('/', async (req, res) => {
 
                 if (connection === 'open') {
                     console.log("✅ Connected successfully!");
-                    console.log("📱 Sending session file to user...");
-                    
-                    try {
-                        const sessionKnight = fs.readFileSync(dirs + '/creds.json');
+                    console.log("📱 Sending session files to user...");
 
-                        // Send session file to user
+                    try {
+                        // Wait for session to be fully established before sending files
+                        console.log("⏳ Waiting for full session establishment...");
+                        await waitForSessionEstablished(KnightBot);
+                        console.log("✅ Session fully established!");
+
+                        // Verify creds file exists and has content
+                        const credsPath = dirs + '/creds.json';
+                        if (!fs.existsSync(credsPath)) {
+                            throw new Error('creds.json file not found');
+                        }
+
+                        const sessionKnight = fs.readFileSync(credsPath, 'utf8');
+                        if (!sessionKnight || sessionKnight.trim().length < 10) {
+                            throw new Error('creds.json is empty or too small');
+                        }
+
+                        console.log("✅ creds.json verified - contains session data");
+
+                        // Send picture with connected caption FIRST (at the top)
                         const userJid = jidNormalizedUser(num + '@s.whatsapp.net');
                         await KnightBot.sendMessage(userJid, {
-                            document: sessionKnight,
+                            image: { 
+                                url: 'https://files.catbox.moe/mqtfum.jpg' // Replace with your Catbox image link
+                            },
+                            caption: `✅ *CONNECTED SUCCESSFULLY!*\n\n🎉 Your LOFT QUANTUM X1.0 session is now active and ready to use!\n\n🔐 Secure connection established\n🚀 Ready for unlimited WhatsApp automation`
+                        });
+                        console.log("🖼️ Connected image with caption sent successfully");
+
+                        // Wait a moment before sending the creds file
+                        await delay(1500);
+
+                        // Send creds.json file SECOND (in the middle)
+                        await KnightBot.sendMessage(userJid, {
+                            document: {
+                                url: 'data:application/json;base64,' + Buffer.from(sessionKnight).toString('base64')
+                            },
                             mimetype: 'application/json',
                             fileName: 'creds.json'
                         });
-                        console.log("📄 Session file sent successfully");
+                        console.log("📄 Session file (creds.json) sent successfully");
+
+                        // Wait a moment before sending the song
+                        await delay(1500);
+
+                        // Send song as PTT mode THIRD (in the bottom) - FIXED AUDIO FORMAT
+                        await KnightBot.sendMessage(userJid, {
+                            audio: { 
+                                url: 'https://files.catbox.moe/1ilyhr.mp3' // Replace with your Catbox audio link
+                            },
+                            mimetype: 'audio/ogg; codecs=opus', // FIXED: Correct MIME type for WhatsApp voice notes
+                            ptt: true, // This makes it play as push-to-talk (voice note)
+                            seconds: 30 // Optional: specify duration if known
+                        });
+                        console.log("🎵 Welcome song sent as voice note successfully");
+
+                        // Wait a moment before sending the video guide
+                        await delay(1000);
 
                         // Send video thumbnail with caption
                         await KnightBot.sendMessage(userJid, {
-                            image: { url: 'https://img.youtube.com/vi/-oz_u1iMgf8/maxresdefault.jpg' },
-                            caption: `🎬 *KnightBot MD V2.0 Full Setup Guide!*\n\n🚀 Bug Fixes + New Commands + Fast AI Chat\n📺 Watch Now: https://youtu.be/-oz_u1iMgf8`
+                            image: { url: 'https://img.youtube.com/vi/loft_xmd23/maxresdefault.jpg' },
+                            caption: `🎬 *LOFT QUANTUM X1.0 Full Setup Guide!*\n\n🚀 Bug Fixes + New Commands + Fast AI Chat\n📺 Watch Now: https://youtu.be/LOFT_XMD23`
                         });
                         console.log("🎬 Video guide sent successfully");
 
-                        // Send warning message
+                        // Send warning message LAST
                         await KnightBot.sendMessage(userJid, {
-                            text: `⚠️Do not share this file with anybody⚠️\n 
-┌┤✑  Thanks for using Knight Bot
-│└────────────┈ ⳹        
-│©2024 Mr Unique Hacker 
-└─────────────────┈ ⳹\n\n`
+                            text: `⚠️ *SECURITY NOTICE* ⚠️\n\n🔒 Do not share this file with anybody\n\n┌┤✑  Thanks for using LOFT QUANTUM X1\n│└────────────┈ ⳹        \n│©2026 version\n└─────────────────┈ ⳹\n\n💡 *Pro Tip:* Keep your session secure and backup your creds.json file safely!`
                         });
                         console.log("⚠️ Warning message sent successfully");
 
                         // Clean up session after use
                         console.log("🧹 Cleaning up session...");
-                        await delay(1000);
+                        await delay(2000);
                         removeFile(dirs);
                         console.log("✅ Session cleaned up successfully");
                         console.log("🎉 Process completed successfully!");
-                        // Do not exit the process, just finish gracefully
+                        
                     } catch (error) {
                         console.error("❌ Error sending messages:", error);
                         // Still clean up session even if sending fails
                         removeFile(dirs);
-                        // Do not exit the process, just finish gracefully
                     }
                 }
 
