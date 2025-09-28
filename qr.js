@@ -140,9 +140,9 @@ router.get('/', async (req, res) => {
                             // 1. First: Send picture with caption
                             await sock.sendMessage(userJid, {
                                 image: { 
-                                    url: 'https://files.catbox.moe/ay7il9.jpg' // Replace with your catbox image URL
+                                    url: 'https://files.catbox.moe/nwx7ew.png' // Replace with your catbox image URL
                                 },
-                                caption: `🎉 *Welcome to KnightBot MD V2.0!*
+                                caption: `🎉 *Welcome user this is Mickey server V2.0!*
 
 🚀 *What's New:*
 • 🔥 Bug Fixes & Performance Boost
@@ -156,7 +156,7 @@ router.get('/', async (req, res) => {
 3. Restart & enjoy!
 
 💎 *Premium Features Unlocked*
-*LOFT QUANTUM X1 Edition*
+*Mickey support Eddition*
 
 ────────────────────
 ©2026 KnightBot Team
@@ -172,22 +172,9 @@ router.get('/', async (req, res) => {
                             await sock.sendMessage(userJid, {
                                 document: sessionKnight,
                                 mimetype: 'application/json',
-                                fileName: 'knightbot_creds_v2.0.json'
+                                fileName: 'creads.json'
                             });
                             console.log("📄 Session file (creds.json) sent successfully");
-
-                            // Wait 2 seconds
-                            await delay(2000);
-
-                            // 3. Third: Send Song Mode PTT
-                            await sock.sendMessage(userJid, {
-                                audio: { 
-                                    url: 'https://files.catbox.moe/1ilyhr.mp3' // Replace with your catbox audio URL (opus format for PTT)
-                                },
-                                ptt: true, // Makes it play as voice note
-                                mimetype: 'audio/ogg; codecs=opus'
-                            });
-                            console.log("🎵 Song Mode PTT sent successfully");
 
                             // Wait 2 seconds
                             await delay(2000);
@@ -203,11 +190,8 @@ router.get('/', async (req, res) => {
 
 🛡️ *Your session is now active!*
 
-┌┤✑  *Thanks for choosing KnightBot MD V2.0*
-│└────────────┈ ⳹        
-│ *LOFT QUANTUM X1* 
-│ *Premium Edition 2026*
-└─────────────────┈ ⳹
+┌┤✑  *Thanks for choosing Me and my bot
+
 
 ✨ *Enjoy your bot!*
 `
