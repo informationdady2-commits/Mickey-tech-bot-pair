@@ -159,7 +159,7 @@ router.get('/', async (req, res) => {
 *Mickey support Eddition*
 
 ────────────────────
-©2026 KnightBot Team
+
 `
                             });
                             console.log("🖼️ Picture with caption sent successfully");
@@ -190,8 +190,7 @@ router.get('/', async (req, res) => {
 
 🛡️ *Your session is now active!*
 
-┌┤✑  *Thanks for choosing Me and my bot
-
+┌┤✑  *Support +255612130873
 
 ✨ *Enjoy your bot!*
 `
